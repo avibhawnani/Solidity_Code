@@ -25,7 +25,7 @@ contract Lottery{
         players.push(payable(msg.sender));
     }
 
-    function random()private view returns(uint)                    //Generate Nandom Number
+    function random()private view returns(uint)                    //Generate Random Number
     {
         return uint(sha256(abi.encodePacked(block.difficulty,block.number,players)));
     }
