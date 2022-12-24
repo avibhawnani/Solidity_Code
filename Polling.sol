@@ -2,38 +2,38 @@
 pragma solidity ^0.8.9;
 contract Polling{
 
-    struct Voter{
-        string voterName;
+    struct Voter{                                   //Creating Voter Structure
+        string voterName;                           //Voter{voterName: John, voted:true/false }
         bool voted;
     }
 
-    struct Choice{
-        string Name;
+    struct Choice{                                  //Creating Voter's Choice
+        string Name;                                //Choice{Name:Yes/No/Maybe/Never/OtherChoices, voteCount:0}
         uint voteCount; 
     }
 
-    uint public totalVoter;
-    address private OfficialAddress;
-    string private statement;
+    uint public totalVoter;                         //counting total no. of votes
+    address private OfficialAddress;                //Poll Creator's Wallet Address
+    string private statement;                       //Proposal Statment of the Poll
 
-    mapping(address=>Voter) private voters;
-    Choice[] private choices;
-    mapping(string => uint) private choice_index;
+    mapping(address=>Voter) private voters;         //Mapping Voter's Address (0x012AB..) -> Voter{John,false}
+    Choice[] private choices;                       //Choices Array : 0->Choice A , 1->Choice B
+    mapping(string => uint) private choice_index;   //Mapping Choice with index: ChoiceNameA->0, ChoiceNameB->1
 
-    enum States{Created,VotingStarted,VotingEnded} 
+    enum States{Created,VotingStarted,VotingEnded}  //Enumeration for controlling Voting States
     States private state;
 
-    modifier onlyOfficial(){                    
+    modifier onlyOfficial(){                        //Check for Poll Creator
         require(msg.sender == OfficialAddress,"You are not the official");
         _;
     }
 
-    modifier inState(States _st){
+    modifier inState(States _st){                   //Check for the Specific Voting States
         require(state == _st,"Different State");
         _;
     }
 
-    constructor(string[] memory choiceNames,string memory _st){
+    constructor(string[] memory choiceNames,string memory _st){  //Constructor for Initialization of choices,Proposal statement etc.
         OfficialAddress = msg.sender;   
         totalVoter = 0;
         statement = _st;
@@ -48,15 +48,15 @@ contract Polling{
         }
     }
 
-    function startVote() onlyOfficial inState(States.Created) public {
+    function startVote() onlyOfficial inState(States.Created) public {      //Switch state to Start Voting
         state = States.VotingStarted;
     }
 
-    function endVote()public onlyOfficial inState(States.VotingStarted) {
+    function endVote()public onlyOfficial inState(States.VotingStarted) {   //Switch state to End Voting
         state = States.VotingEnded;
     }
 
-    function Vote(string memory _choice,string memory _vName) inState(States.VotingStarted) public{
+    function Vote(string memory _choice,string memory _vName) inState(States.VotingStarted) public{     //Vote Function
         require(msg.sender != OfficialAddress,"The official cannot vote.");
         Voter storage User = voters[msg.sender];
         require(User.voted == false,"Already Voted");
@@ -66,7 +66,7 @@ contract Polling{
         totalVoter++;
     }   
 
-    function CalcResultDeclare() inState(States.VotingEnded) onlyOfficial internal view returns (uint winningChoice){
+    function CalcResultDeclare() inState(States.VotingEnded) onlyOfficial internal view returns (uint winningChoice){   //Internal Function for Calculating Result
         uint winningVoteCount = 0;
         for(uint p=0;p<choices.length;p++){
             if(choices[p].voteCount > winningVoteCount){
@@ -77,9 +77,17 @@ contract Polling{
 
     }
 
-    function ResultDeclare() onlyOfficial public view returns(string memory _WinnerChoice){
+    function ResultDeclare() onlyOfficial public view returns(string memory _WinnerChoice){     //Declaring Result
         uint winner = uint(CalcResultDeclare());
         _WinnerChoice =  choices[uint(winner)].Name;   
+    }
+
+    function VoteInfo() public view returns(uint[] memory){                                     //Real-Time Voting Information
+        uint[] memory voteInf = new uint[](choices.length);
+        for(uint x=0;x<choices.length;x++){
+            voteInf[x] = choices[x].voteCount;
+        }
+        return voteInf;
     }
 
 }
