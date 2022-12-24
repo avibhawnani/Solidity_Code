@@ -77,7 +77,7 @@ contract Polling{
 
     }
 
-    function ResultDeclare() public view returns(string memory _WinnerChoice){
+    function ResultDeclare() onlyOfficial public view returns(string memory _WinnerChoice){
         uint winner = uint(CalcResultDeclare());
         _WinnerChoice =  choices[uint(winner)].Name;   
     }
